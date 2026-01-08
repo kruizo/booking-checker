@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
-use App\Http\Resources\BookingResource;
 use App\Services\BookingService;
 use App\Services\ConflictCheckService;
 use Illuminate\Http\JsonResponse;
@@ -21,93 +20,46 @@ class BookingController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $user = $request->user();
-
-        if ($user->is_admin) {
-            $bookings = $this->bookingService->getAllBookings();
-        } else {
-            $bookings = $this->bookingService->getUserBookings($user->id);
+        if ($request->user()->is_admin) {
+            return $this->bookingService->getAllBookings();
         }
 
-        return BookingResource::collection($bookings);
+        return $this->bookingService->getUserBookings();
     }
 
     public function store(StoreBookingRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['user_id'] = $request->user()->id;
-
-        $booking = $this->bookingService->createBooking($data);
+        $bookingResource = $this->bookingService->createBooking($request->validated());
 
         return response()->json([
-            'booking' => new BookingResource($booking),
+            'booking' => $bookingResource,
             'message' => 'Booking created successfully',
         ], 201);
     }
 
-    public function show(Request $request, int $id): JsonResponse
+    public function show(int $id): JsonResponse
     {
-        $booking = $this->bookingService->findBooking($id);
-
-        if (!$booking) {
-            return response()->json([
-                'message' => 'Booking not found',
-            ], 404);
-        }
-
-        // Check authorization
-        if (!$request->user()->is_admin && $booking->user_id !== $request->user()->id) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 403);
-        }
+        $bookingResource = $this->bookingService->findBooking($id);
 
         return response()->json([
-            'booking' => new BookingResource($booking),
+            'booking' => $bookingResource,
         ]);
     }
 
     public function update(UpdateBookingRequest $request, int $id): JsonResponse
     {
-        $booking = $this->bookingService->findBooking($id);
-
-        if (!$booking) {
-            return response()->json([
-                'message' => 'Booking not found',
-            ], 404);
-        }
-
-        if (!$request->user()->is_admin && $booking->user_id !== $request->user()->id) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 403);
-        }
-
-        $this->bookingService->updateBooking($booking, $request->validated());
+        $booking = $this->bookingService->findBookingModel($id);
+        $updatedResource = $this->bookingService->updateBooking($booking, $request->validated());
 
         return response()->json([
-            'booking' => new BookingResource($booking->fresh()),
+            'booking' => $updatedResource,
             'message' => 'Booking updated successfully',
         ]);
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        $booking = $this->bookingService->findBooking($id);
-
-        if (!$booking) {
-            return response()->json([
-                'message' => 'Booking not found',
-            ], 404);
-        }
-
-        if (!$request->user()->is_admin && $booking->user_id !== $request->user()->id) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 403);
-        }
-
-        $this->bookingService->deleteBooking($booking);
+        $this->bookingService->deleteBooking($id);
 
         return response()->json([
             'message' => 'Booking deleted successfully',
@@ -116,16 +68,11 @@ class BookingController extends Controller
 
     public function validate(int $id): JsonResponse
     {
-        $booking = $this->bookingService->findBooking($id);
-
-        if (!$booking) {
-            return response()->json([
-                'message' => 'Booking not found',
-            ], 404);
-        }
+        $bookingResource = $this->bookingService->findBooking($id, checkAuthorization: false);
 
         $report = $this->conflictCheckService->generateConflictReport();
 
+        // Filter conflicts related to this booking
         $relatedConflicts = array_filter(
             $report['overlapping'],
             fn ($conflict) => $conflict['booking_1']['id'] === $id
@@ -139,7 +86,7 @@ class BookingController extends Controller
         );
 
         return response()->json([
-            'booking' => new BookingResource($booking),
+            'booking' => $bookingResource,
             'has_conflicts' => count($relatedConflicts) > 0 || count($relatedExactConflicts) > 0,
             'overlapping' => array_values($relatedConflicts),
             'conflicts' => array_values($relatedExactConflicts),

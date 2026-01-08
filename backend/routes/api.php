@@ -14,8 +14,8 @@ Route::get('/', function () {
 
 Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->group(function (): void {
-        Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/register', [AuthController::class, 'register'])->name('register');
+        Route::post('/login', [AuthController::class, 'login'])->name('login');
     });
 
     Route::get('/health', function () {
@@ -26,8 +26,8 @@ Route::prefix('v1')->group(function (): void {
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/user', [AuthController::class, 'user']);
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::get('/user', [AuthController::class, 'user'])->name('user');
 
         Route::prefix('bookings')->group(function (): void {
             Route::get('/', [BookingController::class, 'index']);

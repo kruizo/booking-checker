@@ -2,74 +2,154 @@
 
 namespace App\Services;
 
+use App\Http\Resources\BookingResource;
 use App\Models\Booking;
+use App\Models\User;
 use App\Repositories\BookingRepository;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
     public function __construct(
-        private BookingRepository $bookingRepository
+        private BookingRepository $bookingRepository,
+        private ConflictCheckService $conflictCheckService
     ) {
     }
 
-    /**
-     * Get all bookings for admin.
-     */
-    public function getAllBookings(): Collection
+
+    public function getAllBookings(): AnonymousResourceCollection
     {
-        return $this->bookingRepository->getAll();
+        $bookings = $this->bookingRepository->getAll();
+        
+        return BookingResource::collection($bookings);
     }
 
-    /**
-     * Get bookings for a specific user.
-     */
-    public function getUserBookings(int $userId): Collection
+
+    public function getUserBookings(): AnonymousResourceCollection
     {
-        return $this->bookingRepository->getByUserId($userId);
+        $user = $this->getAuthenticatedUser();
+        $bookings = $this->bookingRepository->getByUserId($user->id);
+        
+        return BookingResource::collection($bookings);
     }
 
-    /**
-     * Find a booking by ID.
-     */
-    public function findBooking(int $id): ?Booking
+    public function findBooking(int $id, bool $checkAuthorization = true): BookingResource
     {
-        return $this->bookingRepository->findById($id);
+        $booking = $this->bookingRepository->findById($id);
+
+        if (!$booking) {
+            throw new ModelNotFoundException('Booking not found');
+        }
+
+        if ($checkAuthorization) {
+            $this->authorizeBookingAccess($booking);
+        }
+
+        return new BookingResource($booking);
     }
 
-    /**
-     * Create a new booking.
-     *
-     * @param array<string, mixed> $data
-     */
-    public function createBooking(array $data): Booking
+    private function findBookingModel(int $id): Booking
     {
-        return $this->bookingRepository->create($data);
+        $booking = $this->bookingRepository->findById($id);
+
+        if (!$booking) {
+            throw new ModelNotFoundException('Booking not found');
+        }
+
+        $this->authorizeBookingAccess($booking);
+
+        return $booking;
     }
 
-    /**
-     * Update a booking.
-     *
-     * @param array<string, mixed> $data
-     */
-    public function updateBooking(Booking $booking, array $data): bool
+    public function createBooking(array $data): BookingResource
     {
-        return $this->bookingRepository->update($booking, $data);
+        $user = $this->getAuthenticatedUser();
+        $data['user_id'] = $user->id;
+
+        $this->validateTimeLogic($data['start_time'], $data['end_time']);
+
+        $this->conflictCheckService->validateNoOverlap(
+            $data['user_id'],
+            $data['date'],
+            $data['start_time'],
+            $data['end_time']
+        );
+
+        $booking = $this->bookingRepository->create($data);
+        
+        return new BookingResource($booking);
     }
 
-    /**
-     * Delete a booking.
-     */
-    public function deleteBooking(Booking $booking): bool
+    public function updateBooking(Booking $booking, array $data): BookingResource
     {
+        if (isset($data['start_time']) && isset($data['end_time'])) {
+            $this->validateTimeLogic($data['start_time'], $data['end_time']);
+        }
+
+        // Check for overlap if date/time changing
+        if (isset($data['date']) || isset($data['start_time']) || isset($data['end_time'])) {
+            $this->conflictCheckService->validateNoOverlap(
+                $booking->user_id,
+                $data['date'] ?? $booking->date->format('Y-m-d'),
+                $data['start_time'] ?? $booking->start_time,
+                $data['end_time'] ?? $booking->end_time,
+                $booking->id
+            );
+        }
+
+        $this->bookingRepository->update($booking, $data);
+        
+        return new BookingResource($booking->fresh());
+    }
+
+    public function deleteBooking(int $id): bool
+    {
+        $booking = $this->bookingRepository->findById($id);
+
+        if (!$booking) {
+            throw new ModelNotFoundException('Booking not found');
+        }
+
+        $this->authorizeBookingAccess($booking);
+
         return $this->bookingRepository->delete($booking);
     }
 
-    /**
-     * Delete old bookings (older than 30 days).
-     */
     public function deleteOldBookings(): int
     {
         return $this->bookingRepository->deleteOlderThan(30);
     }
+
+
+    private function validateTimeLogic(string $startTime, string $endTime): void
+    {
+        $start = strtotime($startTime);
+        $end = strtotime($endTime);
+
+        if ($end <= $start) {
+            throw ValidationException::withMessages([
+                'end_time' => ['End time must be after start time.'],
+            ]);
+        }
+    }
+
+    private function getAuthenticatedUser(): User
+    {
+        return Auth::user();
+    }
+
+
+    private function authorizeBookingAccess(Booking $booking): void
+    {
+        $user = $this->getAuthenticatedUser();
+
+        if (!$user->is_admin && $booking->user_id !== $user->id) {
+            throw new AuthorizationException('Unauthorized to access this booking.');
+        }
+    }
+
 }

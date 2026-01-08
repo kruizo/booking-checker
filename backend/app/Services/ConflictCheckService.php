@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\BookingRepository;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class ConflictCheckService
 {
@@ -13,10 +14,45 @@ class ConflictCheckService
     }
 
     /**
-     * Generate a comprehensive conflict report.
+     * Validate that a booking doesn't overlap with existing bookings.
      *
-     * @return array<string, mixed>
+     * @throws ValidationException
      */
+    public function validateNoOverlap(
+        int $userId,
+        string $date,
+        string $startTime,
+        string $endTime,
+        ?int $excludeBookingId = null
+    ): void {
+        $existingBookings = $this->bookingRepository->getByUserId($userId);
+
+        $start = strtotime($startTime);
+        $end = strtotime($endTime);
+
+        foreach ($existingBookings as $existing) {
+            // Skip if this is the booking being updated
+            if ($excludeBookingId && $existing->id === $excludeBookingId) {
+                continue;
+            }
+
+            // Check if same date
+            if ($existing->date->format('Y-m-d') !== $date) {
+                continue;
+            }
+
+            $existingStart = strtotime($existing->start_time);
+            $existingEnd = strtotime($existing->end_time);
+
+            // Check for time overlap
+            if ($start < $existingEnd && $end > $existingStart) {
+                throw ValidationException::withMessages([
+                    'date' => ['You already have a booking that overlaps with this time slot.'],
+                ]);
+            }
+        }
+    }
+
     public function generateConflictReport(): array
     {
         $bookings = $this->bookingRepository->getAllForConflictCheck();
@@ -38,11 +74,7 @@ class ConflictCheckService
         ];
     }
 
-    /**
-     * Find overlapping bookings (partial time overlap on same date).
-     *
-     * @return array<int, array<string, mixed>>
-     */
+
     private function findOverlappingBookings(Collection $bookings): array
     {
         $overlapping = [];
@@ -80,7 +112,6 @@ class ConflictCheckService
 
     /**
      * Find conflicting bookings (exact same date and time).
-     *
      * @return array<int, array<string, mixed>>
      */
     private function findConflictingBookings(Collection $bookings): array
@@ -120,7 +151,6 @@ class ConflictCheckService
 
     /**
      * Find gaps between consecutive bookings on the same date.
-     *
      * @return array<int, array<string, mixed>>
      */
     private function findGapsBetweenBookings(Collection $bookings): array
@@ -166,9 +196,6 @@ class ConflictCheckService
         return $gaps;
     }
 
-    /**
-     * Check if two bookings overlap.
-     */
     private function isOverlapping(object $booking1, object $booking2): bool
     {
         if ($booking1->date->format('Y-m-d') !== $booking2->date->format('Y-m-d')) {
@@ -187,9 +214,6 @@ class ConflictCheckService
         return $hasOverlap && !$isExact;
     }
 
-    /**
-     * Check if two bookings are exact conflicts.
-     */
     private function isExactConflict(object $booking1, object $booking2): bool
     {
         return $booking1->date->format('Y-m-d') === $booking2->date->format('Y-m-d')
