@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Http\Responses\ApiResponse;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,43 +19,39 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = $this->authService->register($request->validated());
+        $userResource = $this->authService->register($request->validated());
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $userResource->resource->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
-            'user' => new UserResource($user),
+        return ApiResponse::ok([
+            'user' => $userResource,
             'token' => $token,
-            'message' => 'User registered successfully',
-        ], 201);
+        ], 'User registered successfully');
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $token = $this->authService->login($request->validated());
+        $userResource = $this->authService->login($request->validated());
 
-        $user = auth()->user();
+        $token = $userResource->resource->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
-            'user' => new UserResource($user),
+        return ApiResponse::ok([
+            'user' => $userResource,
             'token' => $token,
-            'message' => 'Login successful',
-        ]);
+        ], 'Login successful');
     }
 
     public function logout(Request $request): JsonResponse
     {
         $this->authService->logout($request->user());
 
-        return response()->json([
-            'message' => 'Logged out successfully',
-        ]);
+        return ApiResponse::ok(null, 'Logged out successfully');
     }
 
     public function user(Request $request): JsonResponse
     {
-        return response()->json([
+        return ApiResponse::ok([
             'user' => new UserResource($request->user()),
-        ]);
+        ], 'User retrieved successfully');
     }
 }

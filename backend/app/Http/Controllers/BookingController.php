@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
+use App\Http\Responses\ApiResponse;
 use App\Services\BookingService;
 use App\Services\ConflictCheckService;
 use Illuminate\Http\JsonResponse;
@@ -31,44 +32,45 @@ class BookingController extends Controller
     {
         $bookingResource = $this->bookingService->createBooking($request->validated());
 
-        return response()->json([
-            'booking' => $bookingResource,
-            'message' => 'Booking created successfully',
-        ], 201);
+        return ApiResponse::ok(
+            ['booking' => $bookingResource],
+            'Booking created successfully'
+        );
     }
 
     public function show(int $id): JsonResponse
     {
-        $bookingResource = $this->bookingService->findBooking($id);
+        $bookingResource = $this->bookingService->getBookingById($id);
 
-        return response()->json([
-            'booking' => $bookingResource,
-        ]);
+        return ApiResponse::ok(
+            ['booking' => $bookingResource],
+            'Booking retrieved successfully'
+        );
     }
 
     public function update(UpdateBookingRequest $request, int $id): JsonResponse
     {
-        $booking = $this->bookingService->findBookingModel($id);
-        $updatedResource = $this->bookingService->updateBooking($booking, $request->validated());
+        $updatedResource = $this->bookingService->updateBooking($id, $request->validated());
 
-        return response()->json([
-            'booking' => $updatedResource,
-            'message' => 'Booking updated successfully',
-        ]);
+        return ApiResponse::ok(
+            ['booking' => $updatedResource],
+            'Booking updated successfully'
+        );
     }
 
     public function destroy(int $id): JsonResponse
     {
         $this->bookingService->deleteBooking($id);
 
-        return response()->json([
-            'message' => 'Booking deleted successfully',
-        ]);
+        return ApiResponse::ok(
+            null,
+            'Booking deleted successfully'
+        );
     }
 
     public function validate(int $id): JsonResponse
     {
-        $bookingResource = $this->bookingService->findBooking($id, checkAuthorization: false);
+        $bookingResource = $this->bookingService->getBookingById($id);
 
         $report = $this->conflictCheckService->generateConflictReport();
 
@@ -85,18 +87,18 @@ class BookingController extends Controller
                 || $conflict['booking_2']['id'] === $id
         );
 
-        return response()->json([
+        return ApiResponse::ok([
             'booking' => $bookingResource,
             'has_conflicts' => count($relatedConflicts) > 0 || count($relatedExactConflicts) > 0,
             'overlapping' => array_values($relatedConflicts),
             'conflicts' => array_values($relatedExactConflicts),
-        ]);
+        ], 'Booking validation completed');
     }
 
     public function conflicts(): JsonResponse
     {
         $report = $this->conflictCheckService->generateConflictReport();
 
-        return response()->json($report);
+        return ApiResponse::ok($report, 'Conflict report generated successfully');
     }
 }

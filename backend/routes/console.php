@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\DeleteOldBookingsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -8,4 +9,4 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('bookings:delete-old')->daily();
+Schedule::job(new DeleteOldBookingsJob())->daily();

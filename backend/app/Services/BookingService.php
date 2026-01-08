@@ -28,31 +28,7 @@ class BookingService
         return BookingResource::collection($bookings);
     }
 
-
-    public function getUserBookings(): AnonymousResourceCollection
-    {
-        $user = $this->getAuthenticatedUser();
-        $bookings = $this->bookingRepository->getByUserId($user->id);
-        
-        return BookingResource::collection($bookings);
-    }
-
-    public function findBooking(int $id, bool $checkAuthorization = true): BookingResource
-    {
-        $booking = $this->bookingRepository->findById($id);
-
-        if (!$booking) {
-            throw new ModelNotFoundException('Booking not found');
-        }
-
-        if ($checkAuthorization) {
-            $this->authorizeBookingAccess($booking);
-        }
-
-        return new BookingResource($booking);
-    }
-
-    private function findBookingModel(int $id): Booking
+    public function getBookingById(int $id): BookingResource
     {
         $booking = $this->bookingRepository->findById($id);
 
@@ -62,7 +38,16 @@ class BookingService
 
         $this->authorizeBookingAccess($booking);
 
-        return $booking;
+        return new BookingResource($booking);
+    }
+
+
+    public function getUserBookings(): AnonymousResourceCollection
+    {
+        $user = $this->getAuthenticatedUser();
+        $bookings = $this->bookingRepository->getByUserId($user->id);
+        
+        return BookingResource::collection($bookings);
     }
 
     public function createBooking(array $data): BookingResource
@@ -84,8 +69,16 @@ class BookingService
         return new BookingResource($booking);
     }
 
-    public function updateBooking(Booking $booking, array $data): BookingResource
+    public function updateBooking(int $id, array $data): BookingResource
     {
+        $booking = $this->bookingRepository->findById($id);
+
+        if (!$booking) {
+            throw new ModelNotFoundException('Booking not found');
+        }
+
+        $this->authorizeBookingAccess($booking);
+
         if (isset($data['start_time']) && isset($data['end_time'])) {
             $this->validateTimeLogic($data['start_time'], $data['end_time']);
         }

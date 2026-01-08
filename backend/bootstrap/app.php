@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Responses\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,19 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Unauthenticated.'
-                ], 401);
-            }
+        // Force JSON for API routes
+        $exceptions->shouldRenderJsonWhen(function ($request) {
+            return $request->is('api/*') || $request->expectsJson();
         });
 
-        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Forbidden. You do not have permission to access this resource.'
-                ], 403);
-            }
+        // Transform all responses to standardized API format
+        $exceptions->respond(function (Response $response) {
+            return ApiResponse::fromResponse($response);
         });
     })->create();
