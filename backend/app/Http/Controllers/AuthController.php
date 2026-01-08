@@ -23,7 +23,7 @@ class AuthController extends Controller
 
         return ApiResponse::ok([
             'user' => $user,
-        ], 'User registered successfully');
+        ], 'User registered successfully', 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -37,7 +37,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $this->authService->logout($request->user());
+        $this->authService->logout($request);
 
         return ApiResponse::ok(null, 'Logged out successfully');
     }

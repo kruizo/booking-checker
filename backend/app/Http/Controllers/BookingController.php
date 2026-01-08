@@ -49,7 +49,8 @@ class BookingController extends Controller
 
         return ApiResponse::ok(
             ['booking' => $bookingResource],
-            'Booking created successfully'
+            'Booking created successfully',
+            201
         );
     }
 

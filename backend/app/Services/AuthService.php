@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Http\Request;
 
 class AuthService
 {
@@ -43,15 +44,16 @@ class AuthService
         return new AuthResource($user);
     }
 
-    public function logout(User $user): void
+    public function logout(Request $request): void
     {
-        $token = $user->currentAccessToken();
+        $token = $request->user()->currentAccessToken();
         if ($token instanceof PersonalAccessToken) {
             $token->delete();
         }
 
-        Auth::logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 }

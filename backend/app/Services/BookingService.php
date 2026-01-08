@@ -29,7 +29,7 @@ class BookingService
     public function getAllBookings(array $params = []): LengthAwarePaginator
     {
         $user = $this->getAuthenticatedUser();
-        $isAdmin = $user->is_admin;
+        $isAdmin = (bool) $user->is_admin;
 
         if (!$isAdmin) {
             $params['user_id'] = $user->id;

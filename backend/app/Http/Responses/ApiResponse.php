@@ -13,19 +13,19 @@ class ApiResponse
     /**
      * Successful response
      */
-    public static function ok(mixed $data = null, string $message = 'Success'): JsonResponse
+    public static function ok(mixed $data = null, string $message = 'Success', int $status = 200): JsonResponse
     {
         if ($data instanceof LengthAwarePaginator) {
             return self::buildPaginatedResponse($data, $message);
         }
 
         return response()->json([
-            'status' => 200,
+            'status' => $status,
             'errorCode' => null,
             'message' => $message,
             'timestamp' => now()->toIso8601String(),
             'data' => $data,
-        ], 200);
+        ], $status);
     }
 
     private static function buildPaginatedResponse(LengthAwarePaginator $paginator, string $message): JsonResponse
