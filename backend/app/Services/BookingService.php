@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Repositories\BookingRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -20,13 +20,28 @@ class BookingService
     ) {
     }
 
-
-    public function getAllBookings(): AnonymousResourceCollection
+    /**
+     * Get all bookings with filters, pagination and sorting.
+     * Admin sees all, regular users only see their own.
+     * 
+     * @param array $params - date, date_from, date_to, start_time, end_time, keyword, page, per_page, sort_by, sort_direction
+     */
+    public function getAllBookings(array $params = []): LengthAwarePaginator
     {
-        $bookings = $this->bookingRepository->getAll();
+        $user = $this->getAuthenticatedUser();
+        $isAdmin = $user->is_admin;
+
+        if (!$isAdmin) {
+            $params['user_id'] = $user->id;
+        }
+
+        $paginator = $this->bookingRepository->getAll($params, $isAdmin);
         
-        return BookingResource::collection($bookings);
+        $paginator->through(fn ($booking) => new BookingResource($booking));
+        
+        return $paginator;
     }
+
 
     public function getBookingById(int $id): BookingResource
     {
@@ -41,15 +56,6 @@ class BookingService
         return new BookingResource($booking);
     }
 
-
-    public function getUserBookings(): AnonymousResourceCollection
-    {
-        $user = $this->getAuthenticatedUser();
-        $bookings = $this->bookingRepository->getByUserId($user->id);
-        
-        return BookingResource::collection($bookings);
-    }
-
     public function createBooking(array $data): BookingResource
     {
         $user = $this->getAuthenticatedUser();
@@ -57,12 +63,12 @@ class BookingService
 
         $this->validateTimeLogic($data['start_time'], $data['end_time']);
 
-        $this->conflictCheckService->validateNoOverlap(
-            $data['user_id'],
-            $data['date'],
-            $data['start_time'],
-            $data['end_time']
-        );
+        // $this->conflictCheckService->validateNoOverlap(
+        //     $data['user_id'],
+        //     $data['date'],
+        //     $data['start_time'],
+        //     $data['end_time']
+        // );
 
         $booking = $this->bookingRepository->create($data);
         

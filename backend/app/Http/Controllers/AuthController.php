@@ -19,25 +19,19 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $userResource = $this->authService->register($request->validated());
-
-        $token = $userResource->resource->createToken('auth-token')->plainTextToken;
+        $user = $this->authService->register($request->validated());
 
         return ApiResponse::ok([
-            'user' => $userResource,
-            'token' => $token,
+            'user' => $user,
         ], 'User registered successfully');
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $userResource = $this->authService->login($request->validated());
-
-        $token = $userResource->resource->createToken('auth-token')->plainTextToken;
+        $user = $this->authService->login($request->validated());
 
         return ApiResponse::ok([
-            'user' => $userResource,
-            'token' => $token,
+            'user' => $user,
         ], 'Login successful');
     }
 

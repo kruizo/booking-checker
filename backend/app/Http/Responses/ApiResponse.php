@@ -4,21 +4,48 @@ namespace App\Http\Responses;
 
 use App\Enums\ErrorCode;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApiResponse
 {
+
     /**
-     * Success response
+     * Successful response
      */
     public static function ok(mixed $data = null, string $message = 'Success'): JsonResponse
     {
+        if ($data instanceof LengthAwarePaginator) {
+            return self::buildPaginatedResponse($data, $message);
+        }
+
         return response()->json([
             'status' => 200,
             'errorCode' => null,
             'message' => $message,
             'timestamp' => now()->toIso8601String(),
             'data' => $data,
+        ], 200);
+    }
+
+    private static function buildPaginatedResponse(LengthAwarePaginator $paginator, string $message): JsonResponse
+    {
+        return response()->json([
+            'status' => 200,
+            'errorCode' => null,
+            'message' => $message,
+            'timestamp' => now()->toIso8601String(),
+            'data' => $paginator->items(),
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'total_pages' => $paginator->lastPage(),
+                'has_next_page' => $paginator->hasMorePages(),
+                'has_prev_page' => $paginator->currentPage() > 1,
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
         ], 200);
     }
 
@@ -39,12 +66,10 @@ class ApiResponse
             'timestamp' => now()->toIso8601String(),
         ];
 
-        // Add errors at root level if provided
         if ($errors !== null) {
             $response['errors'] = $errors;
         }
 
-        // Add data if provided
         if ($data !== null) {
             $response['data'] = $data;
         }
@@ -57,12 +82,10 @@ class ApiResponse
      */
     public static function fromResponse(Response $response): Response
     {
-        // Only transform JSON responses for API routes
         if ($response instanceof JsonResponse && request()->is('api/*')) {
             $statusCode = $response->getStatusCode();
             $content = json_decode($response->getContent(), true);
 
-            // Map common error codes
             $errorCode = match ($statusCode) {
                 401 => ErrorCode::UNAUTHENTICATED,
                 403 => ErrorCode::FORBIDDEN,
@@ -88,7 +111,6 @@ class ApiResponse
                 $errors = $content['errors'];
             }
 
-            // Transform to our format
             $response = [
                 'status' => $statusCode,
                 'errorCode' => $errorCode,
@@ -101,7 +123,7 @@ class ApiResponse
                 $response['errors'] = $errors;
             }
 
-            // Add data if needed
+            // Add data
             if ($data !== null) {
                 $response['data'] = $data;
             }

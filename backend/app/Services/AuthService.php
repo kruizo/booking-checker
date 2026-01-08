@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Http\Resources\UserResource;
+use App\Http\Resources\AuthResource;
 use App\Models\User;
 use App\Repositories\UserRepository;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthService
 {
@@ -15,30 +15,43 @@ class AuthService
     ) {
     }
 
-    public function register(array $data): UserResource
+    public function register(array $data): AuthResource
     {
         $user = $this->userRepository->create($data);
         
-        return new UserResource($user);
+        Auth::login($user);
+        
+        request()->session()->regenerate();
+        $user->token = $user->createToken('auth_token')->plainTextToken;
+
+        return new AuthResource($user);
     }
 
-    public function login(array $credentials): UserResource
+    /**
+     * Login user - sets session cookie AND returns token
+     * Credentials are already validated by LoginRequest
+     */
+    public function login(array $credentials): AuthResource
     {
         $user = $this->userRepository->findByEmail($credentials['email']);
+
+        Auth::login($user, remember: $credentials['remember'] ?? false);
         
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
+        request()->session()->regenerate();
+        $user->token = $user->createToken('auth_token')->plainTextToken;
 
-        $user->tokens()->delete();
-
-        return new UserResource($user);
+        return new AuthResource($user);
     }
 
     public function logout(User $user): void
     {
-        $user->tokens()->delete();
+        $token = $user->currentAccessToken();
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
+
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
     }
 }

@@ -18,7 +18,6 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // Only format API responses
         if ($request->is('api/*') || $request->expectsJson()) {
             // Custom API exceptions
             if ($exception instanceof ApiException) {

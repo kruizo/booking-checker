@@ -5,6 +5,12 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use App\Http\Middleware\VerifyCsrfForWeb;
+use \Illuminate\Session\Middleware\StartSession;
+use App\Http\Middleware\AdminMiddleware;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,17 +20,32 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Sanctum's stateful authentication (cookie-based)
+        $middleware->statefulApi();
+        
+        // Session + CSRF middleware
+        $middleware->api(prepend: [
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            VerifyCsrfForWeb::class,
+        ]);
+        
+        // Exclude auth entry points from CSRF validation (no session yet)
+        $middleware->validateCsrfTokens(except: [
+            'api/v1/auth/login',
+            'api/v1/auth/register',
+        ]);
+        
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin' => AdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Force JSON for API routes
         $exceptions->shouldRenderJsonWhen(function ($request) {
             return $request->is('api/*') || $request->expectsJson();
         });
 
-        // Transform all responses to standardized API format
         $exceptions->respond(function (Response $response) {
             return ApiResponse::fromResponse($response);
         });

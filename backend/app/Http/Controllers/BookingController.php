@@ -9,7 +9,6 @@ use App\Services\BookingService;
 use App\Services\ConflictCheckService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class BookingController extends Controller
 {
@@ -19,13 +18,29 @@ class BookingController extends Controller
     ) {
     }
 
-    public function index(Request $request): AnonymousResourceCollection
+    /**
+     * Get bookings with filters, pagination and sorting.
+     * Supports: ?date=, ?date_from=, ?date_to=, ?start_time=, ?end_time=, ?keyword= (admin only)
+     * Pagination: ?page=, ?per_page=, ?sort_by=, ?sort_direction=
+     */
+    public function index(Request $request): JsonResponse
     {
-        if ($request->user()->is_admin) {
-            return $this->bookingService->getAllBookings();
-        }
+        $params = $request->only([
+            'date',
+            'date_from',
+            'date_to',
+            'start_time',
+            'end_time',
+            'keyword',
+            'page',
+            'per_page',
+            'sort_by',
+            'sort_direction',
+        ]);
 
-        return $this->bookingService->getUserBookings();
+        $bookings = $this->bookingService->getAllBookings($params);
+        
+        return ApiResponse::ok($bookings, 'Bookings retrieved successfully');
     }
 
     public function store(StoreBookingRequest $request): JsonResponse

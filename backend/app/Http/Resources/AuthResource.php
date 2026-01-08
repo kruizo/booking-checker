@@ -5,11 +5,11 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class AuthResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
-     * Used for user data responses - no token.
+     * Used for authentication responses (login/register) - includes token.
      *
      * @return array<string, mixed>
      */
@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'is_admin' => $this->is_admin,
             'created_at' => $this->created_at?->toIso8601String(),
+            'token' => $this->token,
         ];
     }
 }
