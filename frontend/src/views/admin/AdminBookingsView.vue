@@ -128,9 +128,9 @@
           <button
             v-if="pagination.has_prev_page"
             @click="doSearch(pagination.current_page - 1)"
-            class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
-            Prev
+            ← Previous
           </button>
           <span class="px-3 py-2 text-gray-600">
             Page {{ pagination.current_page }} / {{ pagination.total_pages }}
@@ -138,9 +138,9 @@
           <button
             v-if="pagination.has_next_page"
             @click="doSearch(pagination.current_page + 1)"
-            class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
-            Next
+            Next →
           </button>
         </div>
       </div>
