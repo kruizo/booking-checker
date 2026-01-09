@@ -28,15 +28,6 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref('')
 
-  // Add X-XSRF-TOKEN header from cookie for all requests
-  axios.interceptors.request.use((config) => {
-    const xsrfToken = Cookies.get('XSRF-TOKEN')
-    if (xsrfToken) {
-      config.headers['X-XSRF-TOKEN'] = xsrfToken
-    }
-    return config
-  })
-
   const isAuthenticated = computed(() => !!user.value)
   const isAdmin = computed(() => user.value?.is_admin === true)
 
@@ -112,12 +103,24 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = ''
     try {
-      await axiosInstance.post('/api/v1/logout')
+      await api.post('/logout', {})
       user.value = null
       token.value = ''
       sessionStorage.removeItem('auth_user')
+
+      // Clear all cookies
+      document.cookie.split(';').forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, '')
+          .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
+      })
+
       console.log('[auth] logout: logged out')
     } catch (e: any) {
+      // Even if logout fails on backend, clear local state
+      user.value = null
+      token.value = ''
+      sessionStorage.removeItem('auth_user')
       error.value = 'Logout failed'
       console.log('[auth] logout failed:', error.value)
     } finally {

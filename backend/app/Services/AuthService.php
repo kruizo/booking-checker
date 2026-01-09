@@ -51,6 +51,8 @@ class AuthService
             $token->delete();
         }
 
+        Auth::guard('web')->logout();
+
         if ($request->hasSession()) {
             $request->session()->invalidate();
             $request->session()->regenerateToken();
