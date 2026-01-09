@@ -9,19 +9,19 @@ This application provides a comprehensive booking management system with intelli
 ## Sample Pictures
 
 <div align="center">
-  <img src="./frontend/docs/images/0.png" alt="Main" width="600">
+  <img src="./frontend/docs/images/0-2.png" alt="Main" width="600">
   <p><em>Main ("Become Admin" is for toggling admin permission (testing))</em></p>
 
-  <img src="./frontend/docs/images/1.png" alt="Dashboard" width="600">
+  <img src="./frontend/docs/images/1-2.png" alt="Dashboard" width="600">
   <p><em>Dashboard Overview</em></p>
   
-  <img src="./frontend/docs/images/2.png" alt="Booking Form" width="600">
+  <img src="./frontend/docs/images/2-2.png" alt="Booking Form" width="600">
   <p><em>Booking Form</em></p>
   
   <img src="./frontend/docs/images/3.png" alt="Admin Panel" width="600">
   <p><em>Admin Panel</em></p>
   
-  <img src="./frontend/docs/images/7.png" alt="User Management" width="600">
+  <img src="./frontend/docs/images/7-2.png" alt="User Management" width="600">
   <p><em>User Management</em></p>
 </div>
 
