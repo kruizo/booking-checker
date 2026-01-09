@@ -102,7 +102,7 @@ async function onRegister() {
     password_confirmation: password_confirmation.value,
   })
   if (success) {
-    router.push('/')
+    router.push('/bookings')
   }
 }
 </script>

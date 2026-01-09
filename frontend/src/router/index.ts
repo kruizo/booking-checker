@@ -11,11 +11,7 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
-    },
+
     {
       path: '/login',
       name: 'login',
@@ -33,6 +29,32 @@ const router = createRouter({
       name: 'bookings',
       component: () => import('../views/MyBookingsView.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      meta: { requiresAdmin: true },
+      children: [
+        {
+          path: 'dashboard',
+          name: 'admin-dashboard',
+          component: () => import('@/views/admin/AdminDashboardView.vue'),
+        },
+        {
+          path: 'bookings',
+          name: 'admin-bookings',
+          component: () => import('@/views/admin/AdminBookingsView.vue'),
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('@/views/admin/AdminUsersView.vue'),
+        },
+        {
+          path: '',
+          redirect: { name: 'admin-dashboard' },
+        },
+      ],
     },
   ],
 })
@@ -53,6 +75,16 @@ router.beforeEach(async (to, from, next) => {
   // If route requires auth and user is not authenticated, redirect to login
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return next('/login')
+  }
+
+  // If route requires admin and user is not admin, redirect to home
+  if (to.matched.some((r) => r.meta.requiresAdmin)) {
+    if (!auth.isAuthenticated) {
+      return next('/login')
+    }
+    if (!auth.isAdmin) {
+      return next('/')
+    }
   }
 
   // Otherwise, proceed

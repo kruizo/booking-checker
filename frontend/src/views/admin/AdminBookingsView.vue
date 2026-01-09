@@ -1,10 +1,10 @@
 <template>
-  <div class="bg-white rounded-2xl shadow-lg p-12 border border-gray-100 mx-auto mt-8">
-    <div class="flex justify-between items-center mb-10">
-      <h2 class="text-4xl font-bold text-indigo-700">My Bookings</h2>
+  <div class="p-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">All Bookings</h1>
       <button
         @click="openCreateModal"
-        class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -18,169 +18,135 @@
       </button>
     </div>
 
-    <!-- Filters -->
-    <div class="mb-6 bg-gray-50 p-4 rounded-lg">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-          <input
-            v-model="filters.date"
-            type="date"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-          <input
-            v-model="filters.date_from"
-            type="date"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-          <input
-            v-model="filters.date_to"
-            type="date"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-          <input
-            v-model="filters.start_time"
-            type="time"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
-      <div class="mt-4 flex gap-2">
-        <button
-          @click="applyFilters"
-          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          Apply Filters
-        </button>
-        <button
-          @click="clearFilters"
-          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-        >
-          Clear
-        </button>
-      </div>
+    <div class="mb-4 flex gap-4">
+      <input
+        v-model="search"
+        @keyup.enter="doSearch(1)"
+        type="text"
+        placeholder="Search by user name/email..."
+        class="border rounded px-4 py-2 w-64"
+      />
+      <button @click="doSearch(1)" class="bg-indigo-600 text-white px-4 py-2 rounded">
+        Search
+      </button>
+      <button
+        v-if="search"
+        @click="clearSearch"
+        class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
+      >
+        Clear
+      </button>
     </div>
 
-    <div v-if="loading" class="text-center py-12 text-gray-500 text-lg">Loading bookings...</div>
-    <div
-      v-else-if="error"
-      class="bg-red-50 border-l-4 border-red-500 p-6 rounded text-red-700 mb-10 text-lg"
-    >
-      {{ error }}
-    </div>
-    <div v-else>
-      <div v-if="bookings.length === 0" class="text-gray-500 py-12 text-center text-lg">
-        No bookings found.
-      </div>
-      <div v-else>
-        <table class="w-full border-collapse mb-8">
-          <thead>
-            <tr class="bg-indigo-50">
-              <th class="px-6 py-4 text-left text-gray-700 font-semibold text-lg">Date</th>
-              <th class="px-6 py-4 text-left text-gray-700 font-semibold text-lg">Start Time</th>
-              <th class="px-6 py-4 text-left text-gray-700 font-semibold text-lg">End Time</th>
-              <th class="px-6 py-4 text-left text-gray-700 font-semibold text-lg">Created</th>
-              <th class="px-6 py-4 text-left text-gray-700 font-semibold text-lg">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="booking in bookings" :key="booking.id" class="border-b hover:bg-indigo-50">
-              <td class="px-6 py-4">{{ booking.date }}</td>
-              <td class="px-6 py-4">{{ booking.start_time }}</td>
-              <td class="px-6 py-4">{{ booking.end_time }}</td>
-              <td class="px-6 py-4 text-gray-500">{{ formatDate(booking.created_at) }}</td>
-              <td class="px-6 py-4">
-                <div class="flex gap-2">
-                  <button
-                    @click="openViewModal(booking)"
-                    class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm flex items-center gap-1"
-                    title="View"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                    View
-                  </button>
-                  <button
-                    @click="openEditModal(booking)"
-                    class="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm flex items-center gap-1"
-                    title="Edit"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Edit
-                  </button>
-                  <button
-                    @click="confirmDelete(booking)"
-                    class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm flex items-center gap-1"
-                    title="Delete"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="mt-8 flex justify-between items-center">
-          <span class="text-gray-600"
-            >Page {{ pagination.current_page }} of {{ pagination.total_pages }}</span
+    <div class="bg-white rounded-xl shadow p-4">
+      <table v-if="bookings.length" class="w-full text-left">
+        <thead>
+          <tr class="bg-indigo-50">
+            <th class="px-4 py-2">ID</th>
+            <th class="px-4 py-2">User</th>
+            <th class="px-4 py-2">Date</th>
+            <th class="px-4 py-2">Start</th>
+            <th class="px-4 py-2">End</th>
+            <th class="px-4 py-2">Created</th>
+            <th class="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="b in bookings" :key="b.id" class="border-b hover:bg-gray-50">
+            <td class="px-4 py-2">{{ b.id }}</td>
+            <td class="px-4 py-2">
+              {{ b.user?.name || '-' }}<br /><span class="text-xs text-gray-500">{{
+                b.user?.email
+              }}</span>
+            </td>
+            <td class="px-4 py-2">{{ b.date }}</td>
+            <td class="px-4 py-2">{{ b.start_time }}</td>
+            <td class="px-4 py-2">{{ b.end_time }}</td>
+            <td class="px-4 py-2 text-xs text-gray-500">{{ formatDate(b.created_at) }}</td>
+            <td class="px-4 py-2">
+              <div class="flex gap-2">
+                <button
+                  @click="openViewModal(b)"
+                  class="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs"
+                  title="View"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  @click="openEditModal(b)"
+                  class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-xs"
+                  title="Edit"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  @click="confirmDelete(b)"
+                  class="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs"
+                  title="Delete"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else class="text-gray-400 text-center py-12">No bookings found.</div>
+
+      <div class="flex justify-between items-center mt-4">
+        <span class="text-gray-600 text-sm">
+          Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} bookings
+        </span>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="pagination.has_prev_page"
+            @click="doSearch(pagination.current_page - 1)"
+            class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
           >
-          <div class="flex gap-4">
-            <button
-              v-if="pagination.has_prev_page"
-              @click="changePage(pagination.current_page - 1)"
-              class="px-6 py-3 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 text-lg"
-            >
-              Prev
-            </button>
-            <button
-              v-if="pagination.has_next_page"
-              @click="changePage(pagination.current_page + 1)"
-              class="px-6 py-3 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 text-lg"
-            >
-              Next
-            </button>
-          </div>
+            Prev
+          </button>
+          <span class="px-3 py-2 text-gray-600">
+            Page {{ pagination.current_page }} / {{ pagination.total_pages }}
+          </span>
+          <button
+            v-if="pagination.has_next_page"
+            @click="doSearch(pagination.current_page + 1)"
+            class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- View Modal with Validation -->
+    <!-- View Modal -->
     <div
       v-if="showViewModal"
       class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
@@ -201,6 +167,15 @@
         <div v-else-if="validationData">
           <!-- Booking Info -->
           <div class="space-y-4 mb-6">
+            <div>
+              <label class="text-sm font-medium text-gray-600">Booking ID</label>
+              <p class="text-lg text-gray-900">{{ validationData.booking.id }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-600">User</label>
+              <p class="text-lg text-gray-900">{{ validationData.booking.user?.name }}</p>
+              <p class="text-sm text-gray-500">{{ validationData.booking.user?.email }}</p>
+            </div>
             <div>
               <label class="text-sm font-medium text-gray-600">Date</label>
               <p class="text-lg text-gray-900">{{ validationData.booking.date }}</p>
@@ -427,15 +402,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useBookings, type BookingFormData } from '@/composables/useBookings'
 import type { Booking } from '@/model/booking'
 
+const search = ref('')
 const {
   bookings,
+  pagination,
   loading,
   error,
-  pagination,
   formatDate,
   fetchBookings,
   createBooking,
@@ -458,29 +434,13 @@ const formError = ref('')
 const loadingValidation = ref(false)
 const validationData = ref<any>(null)
 
-const filters = reactive({
-  date: '',
-  date_from: '',
-  date_to: '',
-  start_time: '',
-  end_time: '',
-})
-
-function applyFilters() {
-  fetchBookings(1, filters)
+function doSearch(page = 1) {
+  fetchBookings(page, { keyword: search.value })
 }
 
-function clearFilters() {
-  filters.date = ''
-  filters.date_from = ''
-  filters.date_to = ''
-  filters.start_time = ''
-  filters.end_time = ''
-  fetchBookings(1)
-}
-
-function changePage(page: number) {
-  fetchBookings(page, filters)
+function clearSearch() {
+  search.value = ''
+  doSearch(1)
 }
 
 async function openViewModal(booking: Booking) {
@@ -538,7 +498,7 @@ async function handleSubmit() {
     const result = await updateBooking(selectedBooking.value.id, formData.value)
     if (result.success) {
       closeFormModal()
-      await fetchBookings(pagination.value.current_page, filters)
+      await doSearch(pagination.value.current_page)
     } else {
       formError.value = result.error || 'Failed to update booking'
     }
@@ -546,7 +506,7 @@ async function handleSubmit() {
     const result = await createBooking(formData.value)
     if (result.success) {
       closeFormModal()
-      await fetchBookings(1, filters)
+      await doSearch(1)
     } else {
       formError.value = result.error || 'Failed to create booking'
     }
@@ -569,22 +529,11 @@ async function handleDelete() {
   const result = await deleteBooking(selectedBooking.value.id)
   if (result.success) {
     closeDeleteModal()
-    await fetchBookings(pagination.value.current_page, filters)
+    await doSearch(pagination.value.current_page)
   }
 }
 
 onMounted(() => {
-  fetchBookings()
+  fetchBookings(1, { keyword: search.value })
 })
 </script>
-
-<style scoped>
-table {
-  border-radius: 12px;
-  overflow: hidden;
-}
-th,
-td {
-  border-bottom: 1px solid #e5e7eb;
-}
-</style>

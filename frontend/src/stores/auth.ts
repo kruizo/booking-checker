@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
-
+import axiosInstance from '@/lib/axios'
 import { ref, computed } from 'vue'
-
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import type { ApiResponse } from '@/types/api'
+import { useApi } from '@/composables/useApi'
 
 interface AuthUser {
   id: number
@@ -21,16 +21,12 @@ interface AuthData {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  // Try to restore user from sessionStorage
+  const api = useApi()
   const cachedUser = sessionStorage.getItem('auth_user')
   const user = ref<AuthUser | null>(cachedUser ? JSON.parse(cachedUser) : null)
   const token = ref('')
   const loading = ref(false)
   const error = ref('')
-
-  // Set axios baseURL to backend server
-  axios.defaults.baseURL = 'http://localhost:8000'
-  axios.defaults.withCredentials = true
 
   // Add X-XSRF-TOKEN header from cookie for all requests
   axios.interceptors.request.use((config) => {
@@ -45,11 +41,10 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.is_admin === true)
 
   async function fetchUser() {
-    // Only fetch if user is not cached
     try {
       loading.value = true
       error.value = ''
-      const res = await axios.get<ApiResponse<AuthData>>('/api/v1/user')
+      const res = await api.get<ApiResponse<AuthData>>('/user', {})
       user.value = res.data.data.user
       sessionStorage.setItem('auth_user', JSON.stringify(user.value))
       console.log('[auth] fetchUser:', {
@@ -71,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = ''
     try {
       await axios.get('/sanctum/csrf-cookie')
-      const res = await axios.post<ApiResponse<AuthData>>('/api/v1/auth/login', payload)
+      const res = await api.post<ApiResponse<AuthData>>('/auth/login', payload)
       user.value = res.data.data.user
       token.value = res.data.data.user.token || ''
       sessionStorage.setItem('auth_user', JSON.stringify(user.value))
@@ -100,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = ''
     try {
       await axios.get('/sanctum/csrf-cookie')
-      const res = await axios.post<ApiResponse<AuthData>>('/api/v1/auth/register', payload)
+      const res = await api.post<ApiResponse<AuthData>>('/auth/register', payload)
       user.value = res.data.data.user
       token.value = res.data.data.user.token || ''
       sessionStorage.setItem('auth_user', JSON.stringify(user.value))
@@ -117,7 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = ''
     try {
-      await axios.post('/api/v1/logout')
+      await axiosInstance.post('/api/v1/logout')
       user.value = null
       token.value = ''
       sessionStorage.removeItem('auth_user')
@@ -125,6 +120,26 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (e: any) {
       error.value = 'Logout failed'
       console.log('[auth] logout failed:', error.value)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function toggleAdmin() {
+    if (!user.value) return false
+
+    loading.value = true
+    error.value = ''
+    try {
+      const res = await api.patch<ApiResponse<AuthData>>(`/user/${user.value.id}/permission`, {})
+      user.value = res.data.data.user
+      sessionStorage.setItem('auth_user', JSON.stringify(user.value))
+      console.log('[auth] toggleAdmin success:', user.value)
+      return true
+    } catch (e: any) {
+      error.value = e.response?.data?.message || 'Failed to toggle admin status'
+      console.log('[auth] toggleAdmin failed:', error.value)
+      return false
     } finally {
       loading.value = false
     }
@@ -141,5 +156,6 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     fetchUser,
+    toggleAdmin,
   }
 })

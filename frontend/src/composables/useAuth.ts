@@ -15,5 +15,6 @@ export function useAuth() {
     register: auth.register,
     logout: auth.logout,
     fetchUser: auth.fetchUser,
+    toggleAdmin: auth.toggleAdmin,
   }
 }

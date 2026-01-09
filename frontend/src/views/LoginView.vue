@@ -68,12 +68,16 @@ import { useRouter, RouterLink } from 'vue-router'
 const email = ref('')
 const password = ref('')
 const router = useRouter()
-const { login, loading, error } = useAuth()
+const { login, loading, error, isAdmin } = useAuth()
 
 async function onLogin() {
   const success = await login({ email: email.value, password: password.value })
   if (success) {
-    router.push('/')
+    if (isAdmin.value) {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/bookings')
+    }
   }
 }
 </script>
