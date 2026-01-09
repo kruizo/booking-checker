@@ -10,7 +10,7 @@ This application provides a comprehensive booking management system with intelli
 
 <div align="center">
   <img src="./frontend/docs/images/0.png" alt="Main" width="600">
-  <p><em>Main</em></p>
+  <p><em>Main ("Remove Admin" is for toggling admin permission (testing))</em></p>
 
   <img src="./frontend/docs/images/1.png" alt="Dashboard" width="600">
   <p><em>Dashboard Overview</em></p>
