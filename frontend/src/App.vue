@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import { computed, onMounted } from 'vue'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 
 // Check if current route is admin
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
@@ -13,6 +14,11 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 onMounted(async () => {
   await auth.fetchUser()
 })
+
+const handleLogout = async () => {
+  await auth.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -61,7 +67,7 @@ onMounted(async () => {
                     {{ auth.isAdmin ? 'Remove Admin' : 'Make Admin' }}
                   </button>
                   <button
-                    @click="auth.logout"
+                    @click="handleLogout"
                     class="px-4 py-2 text-red-600 hover:bg-red-50 cursor-pointer rounded-lg transition-colors font-medium"
                   >
                     Logout

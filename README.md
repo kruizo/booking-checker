@@ -6,6 +6,22 @@ Full-stack application for managing and analyzing booking conflicts, built with 
 
 This application provides a comprehensive booking management system with intelligent conflict detection, admin capabilities, and automated maintenance. It follows industry best practices and coding standards.
 
+## Sample Pictures
+
+<div align="center">
+  <img src="./frontend/docs/images/1.png" alt="Dashboard" width="600">
+  <p><em>Dashboard Overview</em></p>
+  
+  <img src="./frontend/docs/images/2.png" alt="Booking Form" width="600">
+  <p><em>Booking Form</em></p>
+  
+  <img src="./frontend/docs/images/3.png" alt="Admin Panel" width="600">
+  <p><em>Admin Panel</em></p>
+  
+  <img src="./frontend/docs/images/7.png" alt="User Management" width="600">
+  <p><em>User Management</em></p>
+</div>
+
 ## 📋 Requirements
 
 ### System Requirements
