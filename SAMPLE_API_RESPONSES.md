@@ -43,7 +43,7 @@ Error Response (422 - Validation):
 ```json
 {
   "status": 422,
-  "errorCode": "VALIDATION_ERROR",
+  "errorCode": "E1001",
   "message": "The email has already been taken.",
   "timestamp": "2026-01-08T15:45:10+00:00",
   "errors": {
@@ -94,7 +94,7 @@ Error Response (422 - Invalid Credentials):
 ```json
 {
   "status": 422,
-  "errorCode": "VALIDATION_ERROR",
+  "errorCode": "E1001",
   "message": "The provided credentials are incorrect.",
   "timestamp": "2026-01-08T15:50:00+00:00",
   "errors": {
@@ -125,7 +125,7 @@ Error Response (401 - Unauthenticated):
 ```json
 {
   "status": 401,
-  "errorCode": "UNAUTHENTICATED",
+  "errorCode": "E2000",
   "message": "Unauthenticated.",
   "timestamp": "2026-01-08T16:00:00+00:00"
 }
@@ -316,7 +316,7 @@ Error Response (422 - Validation):
 ```json
 {
   "status": 422,
-  "errorCode": "VALIDATION_ERROR",
+  "errorCode": "E1001",
   "message": "The date field is required.",
   "timestamp": "2026-01-08T18:14:40+00:00",
   "errors": {
@@ -332,7 +332,7 @@ Error Response (422 - Time Overlap):
 ```json
 {
   "status": 422,
-  "errorCode": "VALIDATION_ERROR",
+  "errorCode": "E4001",
   "message": "This booking overlaps with an existing booking.",
   "timestamp": "2026-01-08T18:14:40+00:00",
   "errors": {
@@ -380,7 +380,7 @@ Error Response (404 - Not Found):
 ```json
 {
   "status": 404,
-  "errorCode": "RESOURCE_NOT_FOUND",
+  "errorCode": "E3002",
   "message": "Booking not found",
   "timestamp": "2026-01-08T18:10:00+00:00"
 }
@@ -391,7 +391,7 @@ Error Response (403 - Forbidden):
 ```json
 {
   "status": 403,
-  "errorCode": "FORBIDDEN",
+  "errorCode": "E1003",
   "message": "Unauthorized to access this booking.",
   "timestamp": "2026-01-08T18:10:00+00:00"
 }
@@ -545,7 +545,7 @@ Error Response (403 - Not Admin):
 ```json
 {
   "status": 403,
-  "errorCode": "FORBIDDEN",
+  "errorCode": "E1003",
   "message": "Admin access required.",
   "timestamp": "2026-01-08T18:30:00+00:00"
 }
@@ -641,7 +641,7 @@ Error Response (403 - Self Demotion):
 ```json
 {
   "status": 403,
-  "errorCode": "FORBIDDEN",
+  "errorCode": "E1003",
   "message": "You cannot remove your own admin status.",
   "timestamp": "2026-01-08T18:40:00+00:00"
 }
@@ -839,7 +839,7 @@ Response: Sets `XSRF-TOKEN` cookie (no body)
 ```json
 {
   "status": 401,
-  "errorCode": "UNAUTHENTICATED",
+  "errorCode": "E2000",
   "message": "Unauthenticated.",
   "timestamp": "2026-01-08T18:00:00+00:00"
 }
@@ -850,7 +850,7 @@ Response: Sets `XSRF-TOKEN` cookie (no body)
 ```json
 {
   "status": 403,
-  "errorCode": "FORBIDDEN",
+  "errorCode": "E1003",
   "message": "This action is unauthorized.",
   "timestamp": "2026-01-08T18:00:00+00:00"
 }
@@ -861,7 +861,7 @@ Response: Sets `XSRF-TOKEN` cookie (no body)
 ```json
 {
   "status": 404,
-  "errorCode": "RESOURCE_NOT_FOUND",
+  "errorCode": "E3000",
   "message": "Resource not found",
   "timestamp": "2026-01-08T18:00:00+00:00"
 }
@@ -872,7 +872,7 @@ Response: Sets `XSRF-TOKEN` cookie (no body)
 ```json
 {
   "status": 422,
-  "errorCode": "VALIDATION_ERROR",
+  "errorCode": "E1001",
   "message": "The given data was invalid.",
   "timestamp": "2026-01-08T18:00:00+00:00",
   "errors": {
@@ -886,7 +886,7 @@ Response: Sets `XSRF-TOKEN` cookie (no body)
 ```json
 {
   "status": 500,
-  "errorCode": "INTERNAL_SERVER_ERROR",
+  "errorCode": "E1000",
   "message": "Internal server error has occurred",
   "timestamp": "2026-01-08T18:00:00+00:00"
 }
