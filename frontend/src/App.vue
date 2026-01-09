@@ -2,7 +2,7 @@
 import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute } from 'vue-router'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -11,6 +11,9 @@ const router = useRouter()
 // Check if current route is admin
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 
+// User menu state
+const showUserMenu = ref(false)
+
 onMounted(async () => {
   await auth.fetchUser()
 })
@@ -18,6 +21,14 @@ onMounted(async () => {
 const handleLogout = async () => {
   await auth.logout()
   router.push('/login')
+}
+
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+const closeUserMenu = () => {
+  showUserMenu.value = false
 }
 </script>
 
@@ -32,14 +43,7 @@ const handleLogout = async () => {
             <RouterLink to="/">
               <h1 class="text-2xl font-bold text-gray-600">B.C.C</h1>
             </RouterLink>
-            <nav class="hidden sm:flex flex-1 gap-6 w-full justify-end">
-              <RouterLink
-                v-if="auth.isAuthenticated"
-                to="/bookings"
-                class="text-gray-700 hover:text-indigo-600 transition-colors font-medium"
-                >My Bookings</RouterLink
-              >
-            </nav>
+            <nav class="hidden sm:flex flex-1 gap-6 w-full justify-end items-center"></nav>
             <div class="flex gap-4 items-center">
               <RouterLink
                 v-if="!auth.isAuthenticated"
@@ -53,24 +57,43 @@ const handleLogout = async () => {
                 class="px-4 py-2 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium"
                 >Sign Up</RouterLink
               >
-              <div v-else class="flex gap-4">
-                <div class="flex items-center gap-4">
-                  <div class="flex flex-col items-end">
-                    <span class="text-gray-700 font-semibold">{{ auth.user?.name }}</span>
-                    <span class="text-xs text-gray-500">{{ auth.user?.email }}</span>
+              <!-- User Info Dropdown -->
+              <div v-else class="relative">
+                <button
+                  @click="toggleUserMenu"
+                  class="flex flex-col items-end hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                >
+                  <span class="text-lg font-bold text-gray-900">Hi {{ auth.user?.name }} 👋</span>
+                  <span class="text-xs text-gray-500">{{ auth.user?.email }}</span>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div
+                  v-if="showUserMenu"
+                  class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                  @click="closeUserMenu"
+                >
+                  <div class="px-4 py-2 text-sm text-gray-600 font-medium">Navigation</div>
+                  <div
+                    class="block w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors text-sm text-left"
+                  >
+                    <RouterLink to="/bookings"> 📅 My Bookings </RouterLink>
                   </div>
+                  <div class="border-t border-gray-200 my-1"></div>
+                  <div class="px-4 py-2 text-sm text-gray-600 font-medium">Account</div>
                   <button
                     @click="auth.toggleAdmin"
-                    class="px-4 py-2 text-indigo-600 hover:bg-indigo-50 cursor-pointer rounded-lg transition-colors font-medium"
                     :disabled="auth.loading"
+                    class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
                   >
-                    {{ auth.isAdmin ? 'Remove Admin' : 'Make Admin' }}
+                    {{ auth.isAdmin ? '👑 Remove Admin Access' : '👑 Make Admin' }}
                   </button>
+                  <div class="border-t border-gray-200 my-1"></div>
                   <button
                     @click="handleLogout"
-                    class="px-4 py-2 text-red-600 hover:bg-red-50 cursor-pointer rounded-lg transition-colors font-medium"
+                    class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
                   >
-                    Logout
+                    🚪 Logout
                   </button>
                 </div>
               </div>
