@@ -9,6 +9,9 @@ This application provides a comprehensive booking management system with intelli
 ## Sample Pictures
 
 <div align="center">
+  <img src="./frontend/docs/images/0.png" alt="Main" width="600">
+  <p><em>Main</em></p>
+
   <img src="./frontend/docs/images/1.png" alt="Dashboard" width="600">
   <p><em>Dashboard Overview</em></p>
   
@@ -21,6 +24,8 @@ This application provides a comprehensive booking management system with intelli
   <img src="./frontend/docs/images/7.png" alt="User Management" width="600">
   <p><em>User Management</em></p>
 </div>
+
+**[📸 View More Screenshots](#screenshots)** _(Includes detailed views of booking calendar, conflict detection, and reports)_
 
 ## 📋 Requirements
 
@@ -703,4 +708,23 @@ This project is open-sourced software.
 
 ---
 
-**Status**: Backend API Complete ✅ | Frontend In Progress 🚧
+**Status**: Backend API and Frontend Complete ✅
+
+## Screenshots
+
+<details>
+<summary>Click to expand all screenshots</summary>
+
+### Booking Calendar
+
+<img src="./frontend/docs/images/4.png" alt="Booking Calendar" width="700">
+
+### Conflict Detection
+
+<img src="./frontend/docs/images/5.png" alt="Conflict Detection" width="700">
+
+### Reports Dashboard
+
+<img src="./frontend/docs/images/6.png" alt="Reports" width="700">
+
+</details>
