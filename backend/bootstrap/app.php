@@ -7,8 +7,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use App\Http\Middleware\VerifyCsrfForWeb;
 use \Illuminate\Session\Middleware\StartSession;
+use App\Http\Middleware\VerifyCsrfForWeb;
 use App\Http\Middleware\AdminMiddleware;
 
 
